@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clash of Critters Companion</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- React and ReactDOM CDNs -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <!-- Babel CDN to compile JSX in the browser -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans pb-16 antialiased">
+
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useMemo, useEffect } = React;
+
+    // Custom SVG Icons to avoid external library dependencies in single-file HTML
+    const CompassIcon = () => (
+      <svg className="w-5 h-5 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="10" />
+        <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88" />
+      </svg>
+    );
+
+    const ShieldIcon = () => (
+      <svg className="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      </svg>
+    );
+
+    const FlameIcon = () => (
+      <svg className="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z" />
+      </svg>
+    );
+
+    const ZapIcon = () => (
+      <svg className="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+      </svg>
+    );
+
+    const DropletIcon = () => (
+      <svg className="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z" />
+      </svg>
+    );
+
+    const LeafIcon = () => (
+      <svg className="w-4 h-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <path d="M2 22c1.25-3.27 4-6 7.5-6H14v-4.5c0-3.5-2.73-6.25-6-7.5C11.27 4.25 14 7 14 10.5V14h4.5c3.5 0 6.25 2.73 7.5 6-3.27-1.25-6-4-6-7.5V10h-4.5C12 10 9.27 11.27 8 14.5" />
+      </svg>
+    );
+
+    const ChevronRightIcon = () => (
+      <svg className="w-4 h-4 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <polyline points="9 18 15 12 9 6" />
+      </svg>
+    );
+
+    const StarIcon = () => (
+      <svg className="w-4 h-4 text-amber-400 inline" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+      </svg>
+    );
+
+    const InfoIcon = () => (
+      <svg className="w-5 h-5 inline text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="16" x2="12" y2="12" />
+        <line x1="12" y1="8" x2="12.01" y2="8" />
+      </svg>
+    );
+
+    const SearchIcon = () => (
+      <svg className="w-4 h-4 text-slate-500 absolute left-3 top-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+      </svg>
+    );
+
+    const TargetIcon = () => (
+      <svg className="w-5 h-5 inline text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="10" />
+        <circle cx="12" cy="12" r="6" />
+        <circle cx="12" cy="12" r="2" />
+      </svg>
+    );
+
+    const ChecklistIcon = () => (
+      <svg className="w-4 h-4 inline text-emerald-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+        <polyline points="9 11 11 13 15 9" />
+      </svg>
+    );
+
+    const CoffeeIcon = ({ className }) => (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+        <path d="M18 8h1a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-1V8Z" />
+        <path d="M6 2v2M10 2v2M14 2v2" strokeLinecap="round" />
+      </svg>
+    );
+
+    const TATARI_DATA = [
+      {
+        id: 'buddi',
+        name: 'Buddi',
+        element: 'Leaf',
+        tier: 'S+',
+        role: 'Support/Healer',
+        evolution: ['Buddi (T1)', 'Leaf Buddi (T2)', 'Mossbloom (T3)', 'Heliabloom (T4)'],
+        description: 'The top grass healer. Focuses on massive regenerative powers and consistent team sustain.',
+        skills: 'Sunshower: Heals all nearby allies and boosts elemental defense.',
+        tips: 'S+ priority. Keep positioned behind a durable tank like Punchimp.'
+      },
+      {
+        id: 'dewgrub',
+        name: 'Dewgrub',
+        element: 'Water',
+        tier: 'S+',
+        role: 'Healer/Sustain',
+        evolution: ['Dewgrub (T1)', 'Hydropup (T2)', 'Aquasnail (T3)', 'Somnrayna (T4)'],
+        description: 'An exceptional single-target and multi-target healer that cleanses debuffs.',
+        skills: 'Aqua Purge: Cleanses negative status effects and restores heavy health.',
+        tips: 'Arguably the best water sustain in the game. Essential for Chapter 5 Bosses.'
+      },
+      {
+        id: 'punchimp',
+        name: 'Punchimp',
+        element: 'Earth',
+        tier: 'S+',
+        role: 'Tank/Defender',
+        evolution: ['Punchimp (T1)', 'Rockong (T2)', 'Gorgonape (T3)', 'Hierotyrus (T4)'],
+        description: 'Starts as a playful monkey with taunt-style attacks. Evolves into a clone-summoning powerhouse.',
+        skills: 'Monkey Business: Summons powerful Earth clones that absorb damage and strike multiple targets.',
+        tips: 'The absolute premier tank. Clones are highly effective at distracting bosses like Road Bully.'
+      },
+      {
+        id: 'taptail',
+        name: 'Taptail',
+        element: 'Water',
+        tier: 'S+',
+        role: 'DPS',
+        evolution: ['Taptail (T1)', 'Splashlet (T2)', 'Rippleshear (T3)', 'Tidalwave (T4)'],
+        description: 'Rapid-striking water assassin that shreds enemy armor and bounces off walls with high speed.',
+        skills: 'Rip Current: Unleashes water blades that bounce off screen boundaries to hit backline Zobos.',
+        tips: 'Position in lanes with high cluster groups to maximize the bounce trajectory.'
+      },
+      {
+        id: 'voltfawn',
+        name: 'Voltfawn',
+        element: 'Lightning',
+        tier: 'S+',
+        role: 'Crowd Control',
+        evolution: ['Voltfawn (T1)', 'Zappur (T2)', 'Stormbuck (T3)', 'Umbraveil (T4)'],
+        description: 'Cheerful electric critter that paralyzes large groups of Zobos.',
+        skills: 'Stun Spear: Fires a piercing lightning bolt that passes through and paralyzes all targets in a line.',
+        tips: 'Pair with high DPS units to melt stunned enemies. Highly effective against Water bosses.'
+      },
+      {
+        id: 'ashlarva',
+        name: 'Ashlarva',
+        element: 'Fire',
+        tier: 'S',
+        role: 'DPS/Healer',
+        evolution: ['Ashlarva (T1)', 'Magmaslug (T2)', 'Pyroshell (T3)', 'Pyroviathan (T4)'],
+        description: 'Creates a protective ring of fire that simultaneously burns enemies and heals friendly units.',
+        skills: 'Puffy Blaze: Spawns a flame ring around itself dealing area damage and healing allies in range.',
+        tips: 'Perfect hybrid carry for mixed-danger stages. Place near your front liners.'
+      },
+      {
+        id: 'goonbug',
+        name: 'Goonbug',
+        element: 'Earth',
+        tier: 'S',
+        role: 'DPS/Bruiser',
+        evolution: ['Goonbug (T1)', 'Rubblet (T2)', 'Scrapbeetle (T3)', 'Beetleknight (T4)'],
+        description: 'Daring critter that charges directly into the horde with temporary invincibility.',
+        skills: 'Bugrush: Charges forward, becoming invulnerable and dealing huge impact damage.',
+        tips: 'Use to break heavy waves of shields or charge through Boss projectile lines safely.'
+      },
+      {
+        id: 'frugling',
+        name: 'Frugling',
+        element: 'Leaf',
+        tier: 'S',
+        role: 'DPS/AOE',
+        evolution: ['Frugling (T1)', 'Frugon (T2)', 'Frugantuan (T3)', 'Heliabloom (T4)'],
+        description: 'Launches prickly exploding dragonfruits to melt huge hordes of Zobos.',
+        skills: 'Dragonfruit Bomb: Hurls heavy fruits that shatter on impact, dealing circular splash damage.',
+        tips: 'Aim bank shots to land the dragonfruit right in the center of the largest zombie wave.'
+      }
+    ];
+
+    const CHAPTER_GUIDES = [
+      {
+        id: 1,
+        title: 'Chapter 1: Whispering Forest',
+        stages: '1-1 to 1-40',
+        targetLevel: 'Level 1 - 10',
+        targetTier: 'Tier 1 (Base)',
+        idealStars: '1-2 Stars (Bronze)',
+        hazards: 'Basic Runner Zobos, Crawler Zobos',
+        strategy: 'This is the tutorial chapter. Focus on learning how to aim your trajectory angles. Keep a balanced composition of at least one DPS and one defensive Tatari.',
+        bestElements: ['Fire', 'Leaf'],
+        difficulty: 'Very Easy'
+      },
+      {
+        id: 2,
+        title: 'Chapter 2: Zombie Outpost',
+        stages: '2-1 to 2-60',
+        targetLevel: 'Level 10 - 20',
+        targetTier: 'Tier 1 to Tier 2 Transition',
+        idealStars: '2-3 Stars (Bronze/Silver)',
+        hazards: 'Shield Zobos, Spitter Zobos',
+        strategy: 'Enemies now have shields. Bring high-impact physical attackers like Punchimp or Goonbug to break shields. Keep leveling up with Bento boxes.',
+        bestElements: ['Fire', 'Earth'],
+        difficulty: 'Easy'
+      },
+      {
+        id: 3,
+        title: 'Chapter 3: Neon Suburbs',
+        stages: '3-1 to 3-80',
+        targetLevel: 'Level 20 - 35',
+        targetTier: 'Tier 2 (Evolved)',
+        idealStars: '4-5 Stars (Silver)',
+        hazards: 'Speedster Zobos, Toxic Puddles',
+        strategy: 'The stage pace increases. Bring crowd control Tataris (like Hootlet/Voltfawn) to slow down fast lanes. Focus on healing through toxic hazards.',
+        bestElements: ['Lightning', 'Leaf'],
+        difficulty: 'Medium'
+      },
+      {
+        id: 4,
+        title: 'Chapter 4: Sunken Ruins',
+        stages: '4-1 to 4-80',
+        targetLevel: 'Level 35 - 50',
+        targetTier: 'Tier 2 (Fully Maxed)',
+        idealStars: '1-2 Gold Stars',
+        hazards: 'Water Spouts, Regenerating Zobos',
+        strategy: 'Regenerating Zobos can out-heal basic damage. Bring heavy single-target DPS (Manteeny or Taptail) to burst them down quickly.',
+        bestElements: ['Lightning', 'Leaf'],
+        difficulty: 'Hard'
+      },
+      {
+        id: 5,
+        title: 'Chapter 5: Volcanic Caldera',
+        stages: '5-1 to 5-80',
+        targetLevel: 'Level 50 - 70',
+        targetTier: 'Tier 3 (Ascended)',
+        idealStars: '2-3 Gold Stars',
+        hazards: 'Lava Trails, Exploding Pyro-Zobos (Stage 5-80 Roadblock)',
+        strategy: 'The ultimate campaign block. Exploding Zobos will wipe out your squad in seconds. You MUST run a dedicated Water Sustain team (Dewgrub) and avoid close-range squishies.',
+        bestElements: ['Water', 'Earth'],
+        difficulty: 'Very Hard'
+      }
+    ];
+
+    const BOSS_TACTICS = [
+      {
+        name: 'Road Bully (Rock-Type)',
+        description: 'A heavy-armored boss built around relentless forward movement and summoning endless Rocker waves.',
+        weakness: 'Water / Grass',
+        dangerMoves: 'Ground Slam: Deals heavy line-based damage and stuns frontline targets.',
+        tips: [
+          'Use Water Tataris (like Dewgrub/Taptail) to deal 1.5x elemental counter-damage.',
+          'Deploy durable tanks like Punchimp in front to absorb Ground Slams.',
+          'Rely on clone summons or decoy skills to divert Road Bully’s trajectory.'
+        ]
+      },
+      {
+        name: 'Frankenfish (Water-Type)',
+        description: 'A rapid, teleporting aquatic boss that blankets the arena in devastating waves of splash damage.',
+        weakness: 'Lightning',
+        dangerMoves: 'Tsunami Swell: Floods the entire board, dealing damage over time to non-lightning units.',
+        tips: [
+          'Stack your team with powerful Lightning elements (Voltfawn).',
+          'When Frankenfish teleports, it enters a briefly weakened state. Unleash all active signatures.',
+          'Keep your formation spread out to prevent high splash impact.'
+        ]
+      }
+    ];
+
+    function App() {
+      const [activeTab, setActiveTab] = useState('progression');
+      const [selectedChapterId, setSelectedChapterId] = useState(5);
+      const [dexSearch, setDexSearch] = useState('');
+      const [selectedElementFilter, setSelectedElementFilter] = useState('All');
+      const [selectedTierFilter, setSelectedTierFilter] = useState('All');
+      const [selectedTatariDetail, setSelectedTatariDetail] = useState(null);
+      const [squad, setSquad] = useState([]);
+      const [showSupportModal, setShowSupportModal] = useState(false);
+      const [checklist, setChecklist] = useState({
+        dailyGift: false,
+        dailyQuests: false,
+        evolveTrials: false,
+        bentoCraft: false
+      });
+
+      const toggleChecklist = (key) => {
+        setChecklist({ ...checklist, [key]: !checklist[key] });
+      };
+
+      const filteredTataris = useMemo(() => {
+        return TATARI_DATA.filter(t => {
+          const matchesSearch = t.name.toLowerCase().includes(dexSearch.toLowerCase()) || 
+                                t.role.toLowerCase().includes(dexSearch.toLowerCase());
+          const matchesElement = selectedElementFilter === 'All' || t.element === selectedElementFilter;
+          const matchesTier = selectedTierFilter === 'All' || t.tier === selectedTierFilter;
+          return matchesSearch && matchesElement && matchesTier;
+        });
+      }, [dexSearch, selectedElementFilter, selectedTierFilter]);
+
+      const squadStats = useMemo(() => {
+        if (squad.length === 0) return null;
+        const elements = {};
+        squad.forEach(t => { elements[t.element] = (elements[t.element] || 0) + 1; });
+        
+        let aura = 'No Active Aura (Need at least 2 of the same element)';
+        let auraColor = 'text-slate-400';
+        Object.entries(elements).forEach(([el, count]) => {
+          if (count >= 3) {
+            aura = `🔥 Level 2 ${el} Aura Activated: (+25% Attribute power, -15% Skill Cooldown)`;
+            auraColor = 'text-emerald-400 font-bold';
+          } else if (count === 2) {
+            aura = `⚡ Level 1 ${el} Aura Activated: (+10% Attribute power)`;
+            auraColor = 'text-amber-400 font-semibold';
+          }
+        });
+        return { aura, auraColor };
+      }, [squad]);
+
+      const addToSquad = (tatari) => {
+        if (squad.length >= 4 || squad.some(t => t.id === tatari.id)) return;
+        setSquad([...squad, tatari]);
+      };
+
+      const removeFromSquad = (id) => {
+        setSquad(squad.filter(t => t.id !== id));
+      };
+
+      const getElementBadgeClass = (el) => {
+        switch (el) {
+          case 'Fire': return 'bg-rose-500/20 text-rose-300 border border-rose-500/40';
+          case 'Water': return 'bg-sky-500/20 text-sky-300 border border-sky-500/40';
+          case 'Leaf': return 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+          case 'Earth': return 'bg-amber-500/20 text-amber-300 border border-amber-500/40';
+          case 'Lightning': return 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/40';
+          default: return 'bg-slate-500/20 text-slate-300 border border-slate-500/40';
+        }
+      };
+
+      const getElementIcon = (el) => {
+        switch (el) {
+          case 'Fire': return <FlameIcon />;
+          case 'Water': return <DropletIcon />;
+          case 'Leaf': return <LeafIcon />;
+          case 'Earth': return <ShieldIcon />;
+          case 'Lightning': return <ZapIcon />;
+          default: return null;
+        }
+      };
+
+      const currentChapter = CHAPTER_GUIDES.find(c => c.id === selectedChapterId);
+
+      return (
+        <div>
+          {/* Header */}
+          <header className="relative bg-gradient-to-r from-indigo-950 via-slate-900 to-emerald-950 border-b border-slate-800 py-6 px-4 md:px-8">
+            <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <span className="bg-emerald-500/10 text-emerald-400 text-xs px-2.5 py-0.5 rounded-full border border-emerald-500/30 font-medium">
+                  Clash of Critters Web Assistant
+                </span>
+                <h1 className="text-3xl font-extrabold tracking-tight text-white mt-1">
+                  Tatari Master Class Guide
+                </h1>
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-2.5">
+                {/* Support Button */}
+                <button 
+                  onClick={() => setShowSupportModal(true)}
+                  className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-bold text-xs px-3.5 py-2 rounded-xl shadow-lg shadow-amber-500/15 flex items-center gap-1.5 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+                >
+                  <CoffeeIcon className="w-4 h-4 animate-bounce" />
+                  Support Developer ☕
+                </button>
+
+                <div className="flex items-center gap-2 bg-slate-900/80 p-1.5 rounded-xl border border-slate-800">
+                  <button onClick={() => setActiveTab('progression')} className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${activeTab === 'progression' ? 'bg-emerald-500 text-white' : 'text-slate-400'}`}>📘 Level Guides</button>
+                  <button onClick={() => setActiveTab('dex')} className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${activeTab === 'dex' ? 'bg-emerald-500 text-white' : 'text-slate-400'}`}>🦁 Tatari Dex</button>
+                  <button onClick={() => setActiveTab('synergy')} className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${activeTab === 'synergy' ? 'bg-emerald-500 text-white' : 'text-slate-400'}`}>⚔️ Squads</button>
+                  <button onClick={() => setActiveTab('bosses')} className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${activeTab === 'bosses' ? 'bg-emerald-500 text-white' : 'text-slate-400'}`}>👹 Bosses</button>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          <main className="max-w-7xl mx-auto px-4 md:px-8 mt-6">
+            {/* LEVEL PROGRESSION */}
+            {activeTab === 'progression' && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="lg:col-span-4 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
+                  <h2 className="text-lg font-bold text-slate-200 mb-3 flex items-center">
+                    <CompassIcon /> Story Progress
+                  </h2>
+                  <div className="space-y-2">
+                    {CHAPTER_GUIDES.map(ch => (
+                      <button
+                        key={ch.id}
+                        onClick={() => setSelectedChapterId(ch.id)}
+                        className={`w-full text-left p-3 rounded-xl border transition-all flex items-center justify-between ${
+                          selectedChapterId === ch.id ? 'bg-slate-800 border-emerald-500/50' : 'bg-slate-950/40 border-slate-800'
+                        }`}
+                      >
+                        <div>
+                          <div className="text-xs font-bold text-emerald-400">Chapter {ch.id}</div>
+                          <div className="text-sm font-semibold text-slate-200">{ch.title.split(': ')[1]}</div>
+                        </div>
+                        <span className="text-xs px-2 py-1 rounded bg-slate-900 font-mono">{ch.stages}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Checklist widget */}
+                  <div className="mt-6 border-t border-slate-800 pt-4">
+                    <h3 className="text-sm font-bold text-slate-300 mb-3 flex items-center">
+                      <ChecklistIcon /> Daily Tasks
+                    </h3>
+                    <div className="space-y-2 bg-slate-950/40 p-3 rounded-xl border border-slate-900">
+                      {Object.keys(checklist).map(key => (
+                        <label key={key} className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                          <input type="checkbox" checked={checklist[key]} onChange={() => toggleChecklist(key)} className="rounded text-emerald-500" />
+                          <span className={checklist[key] ? 'line-through text-slate-500' : ''}>{key.replace(/([A-Z])/g, ' $1')}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="lg:col-span-8 flex flex-col gap-6">
+                  <div className="bg-gradient-to-br from-slate-900 to-indigo-950 p-6 rounded-2xl border border-slate-800">
+                    <h3 className="text-2xl font-black text-white">{currentChapter.title}</h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 my-4">
+                      <div className="bg-slate-950/50 p-3 rounded-xl border border-slate-800/60">
+                        <div className="text-[10px] text-slate-400 font-medium uppercase">Ideal Lvl</div>
+                        <div className="text-sm font-bold text-white mt-1 font-mono">{currentChapter.targetLevel}</div>
+                      </div>
+                      <div className="bg-slate-950/50 p-3 rounded-xl border border-slate-800/60">
+                        <div className="text-[10px] text-slate-400 font-medium">Stars</div>
+                        <div className="text-sm font-bold text-emerald-400 mt-1">{currentChapter.idealStars}</div>
+                      </div>
+                      <div className="bg-slate-950/50 p-3 rounded-xl border border-slate-800/60">
+                        <div className="text-[10px] text-slate-400 font-medium">Evolution</div>
+                        <div className="text-sm font-bold text-slate-200 mt-1 truncate">{currentChapter.targetTier}</div>
+                      </div>
+                      <div className="bg-slate-950/50 p-3 rounded-xl border border-slate-800/60">
+                        <div className="text-[10px] text-slate-400 font-medium">Difficulty</div>
+                        <div className="text-sm font-bold text-rose-400 mt-1">{currentChapter.difficulty}</div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="bg-slate-950/40 p-4 rounded-xl border border-slate-800/50">
+                        <h4 className="text-xs font-bold text-slate-300 uppercase mb-1">Hazards</h4>
+                        <p className="text-sm text-slate-400">{currentChapter.hazards}</p>
+                      </div>
+                      <div className="bg-slate-950/40 p-4 rounded-xl border border-slate-800/50">
+                        <h4 className="text-xs font-bold text-slate-300 uppercase mb-1">Tactics</h4>
+                        <p className="text-sm text-slate-300">{currentChapter.strategy}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {selectedChapterId === 5 && (
+                    <div className="bg-rose-950/30 border border-rose-500/20 p-5 rounded-2xl flex gap-4">
+                      <InfoIcon />
+                      <div>
+                        <h4 className="font-bold text-rose-300 text-base">Stuck on Stage 5-80? Here is the Trick!</h4>
+                        <p className="text-xs text-slate-300 mt-1">
+                          Bring multiple water elements, focus on keeping your sustain units alive, and prioritize manual aiming targets that deal explosive damage.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* TATARI DEX */}
+            {activeTab === 'dex' && (
+              <div className="space-y-6">
+                <div className="bg-slate-900/50 p-4 rounded-2xl border border-slate-800 flex flex-col sm:flex-row gap-4 items-center justify-between">
+                  <div className="relative w-full sm:w-72">
+                    <SearchIcon />
+                    <input
+                      type="text"
+                      placeholder="Search Tatari name..."
+                      value={dexSearch}
+                      onChange={(e) => setDexSearch(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-sm text-slate-200"
+                    />
+                  </div>
+
+                  <div className="flex gap-2">
+                    {['All', 'Fire', 'Water', 'Leaf', 'Earth', 'Lightning'].map(el => (
+                      <button key={el} onClick={() => setSelectedElementFilter(el)} className={`px-2.5 py-1 rounded text-xs font-bold ${selectedElementFilter === el ? 'bg-slate-800 border border-emerald-500' : 'bg-slate-950 text-slate-400'}`}>
+                        {el}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {filteredTataris.map(tatari => (
+                    <div key={tatari.id} className="bg-slate-900/40 rounded-2xl border border-slate-800 p-4 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className={`text-[10px] px-2 py-0.5 rounded font-extrabold ${getElementBadgeClass(tatari.element)}`}>
+                            {tatari.element}
+                          </span>
+                          <span className="text-xs font-black bg-indigo-500 px-1.5 py-0.5 rounded">{tatari.tier}</span>
+                        </div>
+                        <h3 className="text-lg font-bold text-white">{tatari.name}</h3>
+                        <p className="text-xs text-slate-400 italic mt-0.5">{tatari.role}</p>
+                        <p className="text-xs text-slate-300 mt-2 line-clamp-2">{tatari.description}</p>
+                      </div>
+
+                      <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between">
+                        <button onClick={() => setSelectedTatariDetail(tatari)} className="text-xs text-emerald-400 font-bold">View Evolutions</button>
+                        <button onClick={() => addToSquad(tatari)} className="text-xs px-2.5 py-1 rounded font-bold bg-emerald-500 hover:bg-emerald-400 text-white">Add</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* SQUAD BUILDER */}
+            {activeTab === 'synergy' && (
+              <div className="space-y-6">
+                <div className="bg-slate-900/40 p-6 rounded-2xl border border-slate-800">
+                  <h2 className="text-xl font-bold text-white">Squad Synergy Test ({squad.length}/4)</h2>
+                  
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 my-6">
+                    {[0, 1, 2, 3].map(index => {
+                      const tatari = squad[index];
+                      return (
+                        <div key={index} className="h-36 rounded-2xl border border-slate-800 bg-slate-950/60 flex flex-col items-center justify-center p-3 relative">
+                          {tatari ? (
+                            <>
+                              <button onClick={() => removeFromSquad(tatari.id)} className="absolute top-2 right-2 text-slate-400 hover:text-white">✕</button>
+                              <span className="text-[9px] px-2 py-0.5 rounded bg-slate-800 text-white mb-1">{tatari.element}</span>
+                              <div className="font-bold text-white">{tatari.name}</div>
+                              <div className="text-[10px] text-slate-400 text-center mt-1">{tatari.role}</div>
+                            </>
+                          ) : (
+                            <div className="text-xs text-slate-600">Empty Slot</div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {squadStats && (
+                    <div className="bg-slate-950/60 p-4 rounded-xl border border-slate-800">
+                      <div className="text-xs text-slate-400 uppercase">Active Elemental Synergy:</div>
+                      <div className={`text-sm mt-1 ${squadStats.auraColor}`}>{squadStats.aura}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* BOSS TACTICS */}
+            {activeTab === 'bosses' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {BOSS_TACTICS.map(boss => (
+                  <div key={boss.name} className="bg-slate-900/40 p-5 rounded-2xl border border-slate-800">
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="text-lg font-bold text-white">{boss.name}</h3>
+                      <span className="text-xs bg-rose-500/10 text-rose-300 px-2 py-0.5 rounded">Weakness: {boss.weakness}</span>
+                    </div>
+                    <p className="text-xs text-slate-400 leading-relaxed mb-3">{boss.description}</p>
+                    <div className="bg-slate-950/50 p-3 rounded-lg border border-slate-800 text-xs">
+                      <strong className="text-rose-400 block mb-1">Dangerous Move:</strong>
+                      {boss.dangerMoves}
+                    </div>
+                    <ul className="list-disc pl-5 text-xs text-slate-300 mt-3 space-y-1">
+                      {boss.tips.map((tip, idx) => <li key={idx}>{tip}</li>)}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            )}
+          </main>
+
+          {/* SUPPORT DEVELOPER MODAL */}
+          {showSupportModal && (
+            <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fadeIn">
+              <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 relative shadow-2xl overflow-hidden">
+                <div className="absolute top-0 right-0 left-0 h-1.5 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600"></div>
+                <button 
+                  onClick={() => setShowSupportModal(false)} 
+                  className="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-950 p-1.5 rounded-full"
+                >
+                  ✕
+                </button>
+                
+                <div className="text-center mt-3">
+                  <div className="bg-amber-500/10 text-amber-400 rounded-full w-14 h-14 flex items-center justify-center mx-auto mb-3">
+                    <CoffeeIcon className="w-7 h-7" />
+                  </div>
+                  <h3 className="text-xl font-black text-white">Support the Creator</h3>
+                  <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                    Help keep this companion app active, completely ad-free, and updated with the newest chapters!
+                  </p>
+                </div>
+
+                {/* Simulated Tiers */}
+                <div className="grid grid-cols-3 gap-3 my-5">
+                  <a 
+                    href="https://ko-fi.com" 
+                    target="_blank" 
+                    className="bg-slate-950 hover:bg-slate-900 border border-slate-850 rounded-2xl p-3 text-center transition"
+                  >
+                    <span className="block text-[10px] text-slate-500 font-bold uppercase mb-0.5">Copper</span>
+                    <span className="text-base font-extrabold text-white font-mono">$3</span>
+                    <span className="block text-[9px] text-amber-400 mt-1">1 Bento Bowl 🍱</span>
+                  </a>
+                  <a 
+                    href="https://ko-fi.com" 
+                    target="_blank" 
+                    className="bg-slate-950 hover:bg-slate-900 border border-slate-850 rounded-2xl p-3 text-center transition"
+                  >
+                    <span className="block text-[10px] text-slate-500 font-bold uppercase mb-0.5">Silver</span>
+                    <span className="text-base font-extrabold text-white font-mono">$5</span>
+                    <span className="block text-[9px] text-emerald-400 mt-1">1 Pinball Ball 🔮</span>
+                  </a>
+                  <a 
+                    href="https://ko-fi.com" 
+                    target="_blank" 
+                    className="bg-slate-950 hover:bg-slate-900 border border-slate-850 rounded-2xl p-3 text-center transition"
+                  >
+                    <span className="block text-[10px] text-slate-500 font-bold uppercase mb-0.5">Gold</span>
+                    <span className="text-base font-extrabold text-white font-mono">$10</span>
+                    <span className="block text-[9px] text-yellow-400 mt-1">Elite Evolution 🦁</span>
+                  </a>
+                </div>
+
+                {/* Customizable Link Notice */}
+                <div className="bg-slate-950 p-3.5 rounded-xl border border-slate-850 text-xs text-slate-400 space-y-1.5">
+                  <p className="text-slate-300 font-bold">💡 How to change these buttons to your links:</p>
+                  <p>
+                    Open your hosted code file, search for <code className="text-amber-400 font-mono">"https://ko-fi.com"</code>, and replace it with your personal link!
+                  </p>
+                </div>
+
+                <div className="mt-5 pt-3 border-t border-slate-850/60 flex items-center justify-between text-[11px] text-slate-500">
+                  <span>Processed securely on external platform</span>
+                  <button 
+                    onClick={() => setShowSupportModal(false)}
+                    className="text-amber-400 hover:underline font-bold"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Evolution Dialog */}
+          {selectedTatariDetail && (
+            <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 relative">
+                <button onClick={() => setSelectedTatariDetail(null)} className="absolute top-4 right-4 text-slate-400 hover:text-white">✕</button>
+                <h3 className="text-xl font-bold text-white mb-1">{selectedTatariDetail.name}</h3>
+                <span className="text-xs text-emerald-400">{selectedTatariDetail.role}</span>
+                <p className="text-xs text-slate-300 mt-2">{selectedTatariDetail.description}</p>
+                
+                <h4 className="text-xs font-bold text-slate-400 uppercase mt-4 mb-2">Evolutions Timeline:</h4>
+                <div className="space-y-1">
+                  {selectedTatariDetail.evolution.map((e, i) => (
+                    <div key={e} className="text-xs bg-slate-950 p-2 rounded border border-slate-850">
+                      Stage {i+1}: <strong className="text-white">{e}</strong>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
